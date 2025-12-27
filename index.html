@@ -1,20 +1,303 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loading</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Nilai Ujian Akhir</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --success-bg: #DCFCE7;
+            --success-text: #166534;
+            --error-bg: #FEE2E2;
+            --error-text: #991B1B;
+        }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        #loader-container {
+            background-color: #F5F2FC;
+            display: flex;
+            align-items: center;
+            justify-content: center; 
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 9999;
+        }
+        svg#mainSVG { width: 300px; height: 300px; visibility: hidden; }
+        .ell, #ai { fill: none; }
+
+        #main-content { display: none; padding: 40px 20px; min-height: 100vh; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            border: 1px solid var(--border);
+        }
+
+        h2 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+        .subtitle { font-size: 14px; color: var(--text-muted); text-align: center; margin-bottom: 32px; }
+
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s;
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        input:disabled { background-color: #F3F4F6; cursor: not-allowed; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            width: 100%;
+        }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+        .btn-primary:disabled { background-color: #9CA3AF; cursor: not-allowed; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border); color: var(--text-main); margin-bottom: 16px; }
+        .btn-outline:hover:not(:disabled) { background-color: #F3F4F6; }
+
+        .results-card { margin-top: 24px; padding: 24px; border-radius: 12px; background: #F9FAFB; border: 1px solid var(--border); }
+        .results-header { font-weight: 700; margin-bottom: 16px; font-size: 18px; }
+        .score-list { list-style: none; margin-bottom: 20px; }
+        .score-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .score-item:last-child { border-bottom: none; }
+
+        .average-box { background: white; padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 16px; border: 1px solid var(--border); }
+        .average-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; }
+        .average-value { font-size: 32px; font-weight: 700; color: var(--primary); }
+
+        .message-box { padding: 16px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: 500; }
+        .message-box.success { background-color: var(--success-bg); color: var(--success-text); }
+        .message-box.error { background-color: var(--error-bg); color: var(--error-text); }
+
+        footer { text-align: center; margin-top: 40px; padding-bottom: 40px; font-size: 12px; color: var(--text-muted); }
+        footer a { color: var(--primary); text-decoration: none; }
+    </style>
 </head>
 <body>
+    <div id="loader-container">
+        <svg id="mainSVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+            <defs>
+                <linearGradient id="aiGrad" x1="513.98" y1="290" x2="479.72" y2="320" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stop-color="#000" stop-opacity="0" />
+                    <stop offset=".15" stop-color="#EF476F" />
+                    <stop offset=".4" stop-color="#359eee" />
+                    <stop offset=".6" stop-color="#03cea4" />
+                    <stop offset=".78" stop-color="#FFC43D" />
+                    <stop offset="1" stop-color="#000" stop-opacity="0" />
+                </linearGradient>
+            </defs>
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <ellipse class="ell" cx="400" cy="300" rx="80" ry="80" />
+            <path id="ai" opacity=0.85 d="m417.17,323.85h-34.34c-3.69,0-6.67-2.99-6.67-6.67v-34.34c0-3.69,2.99-6.67,6.67-6.67h34.34c3.69,0,6.67,2.99,6.67,6.67v34.34c0,3.69-2.99,6.67-6.67,6.67Zm-5.25-12.92v-21.85c0-.55-.45-1-1-1h-21.85c-.55,0-1,.45-1,1v21.85c0,.55.45,1,1,1h21.85c.55,0,1-.45,1-1Zm23.08-16.29h-11.15m-47.69,0h-11.15m70,10.73h-11.15m-47.69,0h-11.15m40.37,29.63v-11.15m0-47.69v-11.15m-10.73,70v-11.15m0-47.69v-11.15" stroke="url(#aiGrad)" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" />
+        </svg>
+    </div>
 
-<!-- SVG loader kamu di sini -->
+    <div id="main-content">
+        <div class="container">
+            <div class="card">
+                <h2>Prediksi Nilai Ujian</h2>
+                <p class="subtitle">Hasil prediksi berdasarkan kejujuran dan usaha kamu.</p>
+                
+                <form id="prediction-form">
+                    <div class="form-group">
+                        <label for="username">Nama Lengkap</label>
+                        <input type="text" id="username" placeholder="Masukkan nama kamu" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Mata Pelajaran</label>
+                        <div id="subjects-container">
+                            <input type="text" name="subjects[]" placeholder="Nama mata pelajaran" required style="margin-bottom: 8px;">
+                        </div>
+                        <button type="button" id="add-btn" class="btn btn-outline" onclick="addSubjectField()">+ Tambah Pelajaran</button>
+                    </div>
 
-<footer>
-  <p>&copy; 2024 kode by @naufalshdq</p>
-</footer>
+                    <button type="submit" id="submit-btn" class="btn btn-primary">Prediksi Hasil</button>
+                </form>
 
-<script src="loader.js"></script>
+                <div id="results-area"></div>
+            </div>
+
+            <footer>
+                <p>Dukung Kami: <a href="https://saweria.co/naufalshdq">Belikan kopi dong hehe ☕</a></p>
+                <p>&copy; 2024 code by @naufalshdq</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        gsap.config({trialWarn: false});
+        let select = s => document.querySelector(s),
+            toArray = s => gsap.utils.toArray(s),
+            mainSVG = select('#mainSVG'),
+            allEll = toArray('.ell'),
+            colorArr = ['#359EEE', '#FFC43D','#EF476F','#03CEA4']
+        let colorInterp = gsap.utils.interpolate(colorArr);
+        gsap.set(mainSVG, { visibility: 'visible' });
+        function animate (el, count) {
+            let tl = gsap.timeline({ defaults: { ease: 'sine.inOut' }, repeat: -1 });
+            gsap.set(el, { opacity: 1 - count/(allEll.length), stroke: colorInterp(count/(allEll.length)) });
+            tl.to(el, { attr: { ry: `-=${count*2.3}`, rx: `+=${count*1.4}` }, ease: 'sine.in' })
+              .to(el, { attr: { ry: `+=${count*2.3}`, rx: `-=${count*1.4}` }, ease: 'sine' })
+              .to(el, { duration: 1, rotation: -180, transformOrigin: '50% 50%' }, 0).timeScale(0.5);
+        }
+        allEll.forEach((c, i) => { gsap.delayedCall(i/(allEll.length-1), animate, [c, i+1]); });
+        gsap.to('#aiGrad', { duration: 4, delay: 0.75, attr: { x1: '-=300', x2: '-=300' }, scale: 1.2, transformOrigin: '50% 50%', repeat: -1, ease: 'none' });
+        gsap.to('#ai', { duration: 1, scale: 1.1, transformOrigin: '50% 50%', repeat: -1, yoyo: true, ease: 'sine.inOut' });
+
+        setTimeout(() => {
+            document.getElementById('loader-container').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }, 2500);
+
+        const successMessages = [
+            "Wow.. si karbit sa ae diatas rata rata ga tuh🫵😂🫵", "Hei sepuh, anda ini jawir yah, hebat hebat orang jawir yah, selamatt❤️‍🔥", "Lumayan juga lu, beruntung amat hidup lu. selamat ya sayang, muchh🥰", "Selamat anda telah selamat dari yang namanya kehidupan ujian, silahkan coba lagi ujian tahun depan yah..", "Gila, lu emang beda kelas bro, tangan dewa kali ya? 👏😂", "Wih, warna hijau lagi nih, kapan-kapan ajarin tips and trick dong! 😎", "Kok bisa sih, orang biasa ga bakal sanggup kek gini!🔥", "Beruntung banget lu, dapet jackpot kehidupan nih. Selamat bro! ✨", "Kamu tuh kandidat orang jawir beneran deh, fix ga ada lawan! ❤️‍🔥", "Ayo-ayo siapa lagi yang bisa sekeren ini? Kamu hebat banget! 👏", "Astaga, bakat lu di atas rata-rata! Apakah ini cheat? 🤔😂", "Hebatnya kayak pesulap deh, sukses mulus gitu aja! 🎩✨", "Lu bikin iri orang sekampung nih, congrats ya bos! 💪😂", "Bro, lu ini aktor utamanya sukses, kita cuma cameo. 👀", "Hei, udah daftar jadi superhero belum? Kemampuan lu super sih! 🦸‍♂️🔥", "Wah hebat banget, jarang banget liat yang bisa kayak gini! 💯", "Ternyata keberuntungan ada yang bisa disewa, dan lu nyewa full set! 🤑", "Mantap banget bang, warna hijau itu langka kayak unicorn tau! 🦄", "Lu lagi di level dewa nih, ajarin caranya dong master! 🙏😂", "Wih, apa rahasianya bisa ngehajar probabilitas 0.001%? 😲", "Cie yang berhasil, boleh dong traktiran dikit. 🎉😂", "Luar biasa sih, orang kayak lu tuh bikin hidup lebih seru! 🥳", "Lu bikin kita yang lain iri, selamat ya jawara! 💪", "Waduh, lu kayak cheat engine hidup ya, semudah itu bro! 😂", "Congrats, hidup lu ini bener-bener kayak mimpi deh! ✨", "Pas banget, ini momen ‘kok bisa sih?’, kagum banget deh! 😅", "Selamat bang, ini pasti ada campur tangan semesta buat bantu lu! 🌌", "Hoki lu kayaknya gak ada habisnya, sukses terus ya bos! 💸", "Sumpah, gua gak percaya kalo ini cuma kebetulan. Lu keren banget! 👏", "Lu bikin probabilitas gak masuk akal jadi kenyataan. Nice! 🤯", "Lu ini kayak alien di tengah manusia, luar biasa banget! 👽", "Lu ini kayak pemenang lotre kehidupan, hoki lu parah! 🤑", "Sumpah, ini epic banget sih, ga ada kata lain. Respect! 👏", "Lu bikin yang mustahil jadi mungkin. Ini sih level legenda! 🔥", "Kayaknya lu harus jadi pembicara motivasi deh, inspirasi banget! 🎤", "Lu ini bukti nyata kalo keberuntungan itu nyata. GG! 💯", "Selamat ya, ini momen yang bikin kita semua jadi kagum! 🎉",
+            "Gila sih, lu emang ditakdirkan jadi juara! 🏆", "Waduh, ini mah level dewa, bukan manusia biasa lagi! ⚡", "Selamat ya, lu bikin standar baru buat kita semua! 🌟", "Mantap jiwa! Hasilnya bikin mata melek nih! 👀🔥", "Lu emang jagoan, gak ada obatnya! 💊😂", "Wih, masa depan cerah nih, jangan lupa temen ya! ☀️", "Gak nyangka, lu bisa sekeren ini! Salut banget! 🫡", "Ini baru namanya kerja keras terbayar lunas! 💰✨", "Selamat bosku, lu emang paling top markotop! 👍", "Waduh, lu pake jimat apa sih bisa hoki gini? 🧿😂", "Selamat ya, lu emang pantes dapet yang terbaik! 🥇", "Gila, lu bikin rekor baru di hati kita semua! ❤️", "Wih, warna ijo semua, seger bener kayak cendol! 🍧😂", "Selamat ya, lu emang bintang utamanya hari ini! 🌠", "Mantap bang, lu emang gak ada lawan di kelas ini! 🥊", "Selamat ya, lu bikin bangga satu kelurahan nih! 🏘️", "Waduh, lu emang magnet keberuntungan ya! 🧲✨", "Selamat ya, lu emang jenius yang tersembunyi! 🧠🔥", "Gila, lu bikin kita semua melongo liat hasilnya! 😲", "Selamat ya, lu emang juara di hati orang tua! 👨‍👩‍👧‍👦",
+            "Wih, lu emang titisan Einstein ya? Pinter bener! 🧠✨", "Selamat ya, lu bikin sejarah baru hari ini! 📜🔥", "Mantap bos, lu emang gak pernah mengecewakan! 💯", "Selamat ya, lu emang pahlawan tanpa tanda jasa! 🦸‍♂️", "Gila, lu bikin kita semua iri tingkat nasional! 🇮🇩😂", "Wih, lu emang raja segala raja di bidang ini! 👑", "Selamat ya, lu emang mutiara yang baru ketemu! 💎", "Mantap jiwa, lu emang gak ada duanya! ✌️🔥", "Selamat ya, lu emang inspirasi buat anak muda! 💡", "Gila, lu bikin dunia berhenti sejenak liat hasil lu! 🌍✨", "Wih, lu emang master of prediction ya! 🔮😂", "Selamat ya, lu emang legenda hidup yang nyata! 🐉", "Mantap bang, lu emang gak ada matinya! 💀🔥", "Selamat ya, lu emang idola baru di sekolah! 🎤", "Gila, lu bikin kita semua tepuk tangan meriah! 👏✨", "Wih, lu emang aset berharga buat negara! 🇮🇩💎", "Selamat ya, lu emang pemenang sejati! 🏁", "Mantap jiwa, lu emang gak bisa diremehin! 😤🔥", "Selamat ya, lu emang kebanggaan kita semua! 🤗", "Gila, lu bikin hari ini jadi luar biasa! 🌈✨"
+        ];
+
+        const errorMessages = [
+            "Bangke, rendah amat nilai lu 😂", "Belajar dong dek 😅", "Nilai lu dingin kayak kutub utara 🥶", "Semangat putus asa boleh 😌", "Bangke, nyesel gw hitung rata rata lu, rendah amat nilai lu dek dek", "Tuhkan rendah nilai lu, mampusss awowkwok, makanya disuruh belajar ya belajar, scroll teros tuh sosmed sampai jadi bodoh lu kan", "Semangat putus asa yah, tetap lah menyerah dan jangan hidup lagi yah🥰❤️‍🔥", "Kamu jujur dalam ujian, gapapa kok, semua itu hanya angka, yang penting bagaimana sikap kamu dalam mengerjakanya dari dalam ❤️‍🔥", "Hadeh udah beban keluarga, belajar enggan, bodoh enggan. tapi kerjaannya cuma ngeluh doang. belajar dari kesalahan lu koca😌.", "Dek, kalau malas belajar, nanti suksesnya cuma jadi wacana. Bangun dong, jangan rebahan terus!", "Wow, nilai lu ya... kayak suhu di Kutub Utara, dingin banget.", "Tenang aja, gagal itu biasa kok... tapi kalau terus-terusan ya aneh juga sih.", "Belajar itu bukan beban, dek, yang berat itu ekspektasi keluarga kamu!", "Nilai rendah itu bukan akhir dunia, tapi ya jangan dijadiin kebiasaan juga, bro.", "Kamu belajar dari kesalahan? Bagus... Tapi kenapa kesalahannya masih sama terus?", "Santai aja, dek, nilai itu cuma angka... Tapi kalau 0 terus ya tetap bikin malu.", "Gak apa-apa kalau salah, yang penting jangan terus-terusan jadi konten komedi hidup.", "Dek, kamu hebat banget! Hebat bikin orang mikir dua kali buat bantuin lu belajar.", "Jangan takut salah, takutlah kalau terus jadi bahan lelucon teman-teman.", "Hasil kamu itu membuktikan, kalau rebahan lebih sering daripada belajar, hasilnya ya gini.", "Semangat ya, dek! Meskipun kayaknya bakat kamu bukan di akademis, tapi di komedi situasi hidup.", "Gagal sekali, itu biasa. Gagal terus-terusan, itu perlu dipertanyakan sih usahanya.", "Kamu tahu? Einstein pernah gagal. Tapi dia belajar... Nah, kamu kapan?", "Nilai lu kayak sinyal HP di hutan, hilang timbul gak jelas.", "Dek, kalau malas terus, sukses hanya akan jadi nama Wifi tetangga.", "Tenang, gak perlu merasa beban keluarga... yang penting tetap menghibur mereka dengan nilai kamu.", "Lu bisa kok jadi motivator... motivator buat orang lain biar gak kayak lu.", "Nyesel gak belajar dari awal? Atau masih santai-santai aja?", "Jangan khawatir soal nilai rendah, khawatirkan kalau guru sampai kasih bonus nilai kasihan.", "Dek, nilai kamu bagus kok... kalau standarnya dari dasar palung Mariana.", "Bangun! Ini bukan drama, nilai kamu nyata dan itu... menyedihkan.", "Dek, hidup itu pilihan. Dan kamu selalu memilih yang salah, ya?", "Teruslah mencoba, dek! Karena kalau menyerah, ya... malu banget sih.", "Kamu harus yakin. Yakin bahwa belajar itu penting, bukan cuma rebahan.", "Dek, kalau kamu terus begini, masa depan bakal kasih surat pengunduran diri.", "Gak apa-apa kok gagal, asalkan bukan jadi pekerjaan tetap.", "Kalau nilai lu manusia, dia pasti udah capek hidup.", "Belajar itu memang berat, tapi masa depan yang suram lebih berat lagi.", "Dek, kalau lu mau sukses, ya minimal bangun dulu dari kasur.", "Semangat terus ya... walau hasilnya kayaknya gak semangat.", "Hidup itu kayak ujian, kalau malas, hasilnya nihil.", "Gagal itu cuma sementara... kecuali kalau kamu memang gak mau berubah.", "Nilai lu tuh inspirasi banget, dek. Inspirasi buat guru pensiun dini.", "Ingat, belajar itu investasi. Kalau gak belajar, ya bangkrut masa depan lu.", "Tenang, nilai kecil itu cuma angka... Tapi malu sih tetap aja.", "Mungkin kamu gak bodoh, dek... mungkin cuma belum nemu cara ngakalinnya.", "Setidaknya kalau gak pinter, usahain jadi rajin. Jangan dua-duanya gak ada.", "Jangan menyerah, kecuali kalau emang udah niat bikin orang tua kecewa.", "Nilai itu relatif, tapi usaha itu mutlak. Mana usaha lu?", "Kalau nilai kamu itu meme, pasti viral banget karena bikin ngakak.", "Dek, kalau rebahan itu menghasilkan nilai, kamu pasti juara kelas.", "Hasil gak akan mengkhianati usaha. Nah, hasil kamu jelas nunjukin usaha kamu mana?", "Tenang aja, nilai kecil itu bukan akhir dunia... tapi bisa jadi awalnya.", "Lu tau gak? Kegagalan adalah guru terbaik. Tapi kok kayaknya kamu gak lulus juga ya?", "Semangat putus asa boleh, tapi jangan lupa coba bangkit dulu.", "Nilai lu tuh membuktikan bahwa malas adalah jalan ninja yang salah.", "Hidup itu penuh kejutan, tapi nilai lu tuh gak ada yang mengejutkan sih... konsisten rendah.", "Dek, masa depan yang cerah nunggu kamu... di sisi lain layar HP kamu.",
+            "Waduh, nilai lu kayak saldo ATM tanggal tua, tipis bener! 💸😂", "Dek, lu belajar apa cuma numpang absen doang sih? 🙄", "Nilai lu bikin guru pengen resign massal nih! 🏫🏃‍♂️", "Semangat ya, meskipun hasilnya bikin pengen nangis di pojokan. 😭", "Wih, nilai lu antik ya, jarang ada yang serendah ini! 🏺😂", "Dek, masa depan lu lagi ngetawain lu tuh dari jauh. 🤡", "Nilai lu kayak skor game over, coba lagi tahun depan ya! 🎮", "Waduh, lu ini beban keluarga atau beban negara sih? 🌏😂", "Selamat ya, lu berhasil bikin kita semua speechless karena rendahnya! 😶", "Dek, mending jualan cilok aja deh kalau males belajar gini. 🍡", "Nilai lu kayak sinyal 2G di tengah hutan, lemot bener! 📶😂", "Waduh, lu ini titisan orang malas sedunia ya? 🛌✨", "Selamat ya, lu dapet rekor nilai paling 'minimalis' tahun ini! 📉", "Dek, kalau lu mau sukses, ya minimal buka buku lah, jangan buka sosmed mulu! 📱", "Nilai lu bikin kita semua mikir, lu sebenernya sekolah atau cuma main? 🎒😂", "Waduh, lu ini bukti nyata kalau rebahan itu gak menghasilkan apa-apa! 🛌", "Selamat ya, lu berhasil bikin orang tua lu geleng-geleng kepala! 🤦‍♂️", "Dek, nilai lu kayak suhu di freezer, beku bener! ❄️😂", "Waduh, lu ini calon legenda di dunia pengangguran ya? 👷‍♂️❌", "Selamat ya, lu bikin hari ini jadi penuh komedi karena nilai lu! 🤡✨"
+        ];
+
+        const getScoreCache = () => JSON.parse(localStorage.getItem('scoreCache')) || {};
+        const saveScoreCache = (cache) => localStorage.setItem('scoreCache', JSON.stringify(cache));
+
+        function addSubjectField() {
+            const container = document.getElementById('subjects-container');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.name = 'subjects[]';
+            input.placeholder = 'Nama mata pelajaran';
+            input.required = true;
+            input.style.marginBottom = '8px';
+            container.appendChild(input);
+        }
+
+        document.getElementById('prediction-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const subjectInputs = document.getElementsByName('subjects[]');
+            const subjects = Array.from(subjectInputs).map(i => i.value.trim()).filter(v => v !== "");
+            const resultsArea = document.getElementById('results-area');
+            
+            let totalScore = 0;
+            let scoresHtml = "";
+            const scoreCache = getScoreCache();
+            
+            subjects.forEach(sub => {
+                const normalized = sub.toLowerCase();
+                if (!scoreCache[normalized]) {
+                    scoreCache[normalized] = Math.floor(Math.random() * (95 - 40 + 1)) + 40;
+                }
+                const score = scoreCache[normalized];
+                totalScore += score;
+                scoresHtml += `<div class="score-item"><span>${sub}</span><strong>${score}</strong></div>`;
+            });
+
+            saveScoreCache(scoreCache);
+
+            const finalAvg = (totalScore / subjects.length).toFixed(2);
+            const msg = finalAvg >= 75 ? successMessages[Math.floor(Math.random() * successMessages.length)] : errorMessages[Math.floor(Math.random() * errorMessages.length)];
+
+            let resultsContent = `
+                <div class="results-card">
+                    <div class="results-header">Halo, ${username}! 🥳</div>
+                    <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">Berikut adalah hasil prediksi nilai ujian kamu:</p>
+                    <div class="score-list">${scoresHtml}</div>
+            `;
+
+            if (subjects.length >= 8) {
+                resultsContent += `
+                    <div class="average-box">
+                        <div class="average-label">Rata-rata Prediksi</div>
+                        <div class="average-value">${finalAvg}</div>
+                    </div>
+                `;
+            } else {
+                resultsContent += `<p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 16px;">(Rata-rata hanya ditampilkan untuk minimal 8 mata pelajaran)</p>`;
+            }
+
+            resultsContent += `
+                    <div class="message-box ${finalAvg >= 75 ? 'success' : 'error'}">${msg}</div>
+                </div>
+            `;
+
+            resultsArea.innerHTML = resultsContent;
+            
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('add-btn').disabled = true;
+            document.getElementById('username').disabled = true;
+            Array.from(subjectInputs).forEach(input => input.disabled = true);
+            
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
 </body>
 </html>

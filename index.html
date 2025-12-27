@@ -108,6 +108,180 @@
 
         footer { text-align: center; margin-top: 40px; padding-bottom: 40px; font-size: 12px; color: var(--text-muted); }
         footer a { color: var(--primary); text-decoration: none; }
+
+        body.dark {
+            --bg: #0F172A;
+            --card-bg: #111827;
+            --text-main: #E5E7EB;
+            --text-muted: #9CA3AF;
+            --border: #1F2933;
+            --success-bg: #064E3B;
+            --success-text: #A7F3D0;
+            --error-bg: #7F1D1D;
+            --error-text: #FECACA;
+        }
+
+        .dark-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 16px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #CBD5F5;
+            transition: 0.3s;
+            border-radius: 999px;
+        }
+
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .switch input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        .switch input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        body.dark input {
+            background-color: #020617;
+            color: var(--text-main);
+            border-color: #1E293B;
+        }
+
+        body.dark .results-card {
+            background-color: #020617;
+        }
+
+        body.dark .average-box {
+            background-color: #020617;
+        }
+
+        /* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+/* Default Mobile (≤480px) */
+@media (max-width: 480px) {
+    #main-content {
+        padding: 20px 12px;
+    }
+
+    .container {
+        max-width: 100%;
+    }
+
+    .card {
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+
+    input {
+        font-size: 15px;
+        padding: 10px 14px;
+    }
+
+    .btn {
+        font-size: 15px;
+        padding: 10px 16px;
+    }
+
+    .average-value {
+        font-size: 26px;
+    }
+
+    svg#mainSVG {
+        width: 220px;
+        height: 220px;
+    }
+
+    footer {
+        font-size: 11px;
+        margin-top: 24px;
+    }
+}
+
+/* Tablet (481px – 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .container {
+        max-width: 90%;
+    }
+
+    .card {
+        padding: 28px;
+    }
+
+    h2 {
+        font-size: 22px;
+    }
+
+    .average-value {
+        font-size: 28px;
+    }
+
+    svg#mainSVG {
+        width: 260px;
+        height: 260px;
+    }
+}
+
+/* Laptop kecil (769px – 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container {
+        max-width: 600px;
+    }
+}
+
+/* Desktop besar (≥1280px) */
+@media (min-width: 1280px) {
+    .container {
+        max-width: 640px;
+    }
+
+    h2 {
+        font-size: 26px;
+    }
+
+    .average-value {
+        font-size: 34px;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -160,15 +334,23 @@
     <div id="main-content">
         <div class="container">
             <div class="card">
+                <div class="dark-toggle">
+                    <span>🌙</span>
+                    <label class="switch">
+                        <input type="checkbox" id="darkModeToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
                 <h2>Prediksi Nilai Ujian</h2>
                 <p class="subtitle">Hasil prediksi berdasarkan kejujuran dan usaha kamu.</p>
-                
+
                 <form id="prediction-form">
                     <div class="form-group">
                         <label for="username">Nama Lengkap</label>
                         <input type="text" id="username" placeholder="Masukkan nama kamu" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label>Mata Pelajaran</label>
                         <div id="subjects-container">
@@ -191,6 +373,21 @@
     </div>
 
     <script>
+        const toggle = document.getElementById('darkModeToggle');
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark');
+            toggle.checked = true;
+        }
+
+        toggle.addEventListener('change', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem(
+                'theme',
+                document.body.classList.contains('dark') ? 'dark' : 'light'
+            );
+        });
+
         gsap.config({trialWarn: false});
         let select = s => document.querySelector(s),
             toArray = s => gsap.utils.toArray(s),

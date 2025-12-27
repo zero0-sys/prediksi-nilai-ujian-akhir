@@ -107,14 +107,13 @@ git push origin feature-branch
 ---
 
 ## Lisensi
-Proyek ini dilisensikan di bawah GNU GENERAL PUBLIC LICENSE. Lihat berkas LICENSE untuk detailnya.
-
+free
 ---
 
 ## Ucapan Terima Kasih
-- Dibuat oleh ig:@naufalshdq
+- Dibuat oleh :@naufalshdq
 - Ucapan terima kasih khusus kepada kontributor dan penguji
-- Dukung kami di: [Saweria](https://saweria.co/mhammadnaufal)
+- Dukung kami di: [Saweria](https://saweria.co/naufalshdq)
 
 ---
 
